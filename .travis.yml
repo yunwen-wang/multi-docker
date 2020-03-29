@@ -1,0 +1,23 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t oreomini/react-test -f ./client/Dockerfile.dev ./client/Dockerfile.dev
+
+script:
+  - docker run  -e CI=true oreomini/react-test npm test
+
+after_success:
+  - docker build -t oreomini/multi-client ./client
+  - docker build -t oreomini/multi-nginx ./nginx
+  - docker build -t oreomini/multi-server ./server
+  - docker build -t oreomini/multi-worker ./worker
+
+  # log in to the docker cli
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # take images and push to docker hub
+  - docker push oreomini/multi-client
+  - docker push oreomini/multi-nginx
+  - docker push oreomini/multi-server
+  - docker push oreomini/multi-worker
